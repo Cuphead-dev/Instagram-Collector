@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "IG Collection Collector",
+  "version": "1.0",
+  "description": "ดึงลิงก์และรูป thumbnail จาก Instagram Collection แล้วสร้าง HTML ในโฟลเดอร์ output",
+  "permissions": ["scripting", "activeTab", "downloads", "storage"],
+    "host_permissions": [
+    "https://www.instagram.com/*" 
+    ],
+      "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "Defaule.png",
+      "48": "Defaule.png",
+      "128": "Defaule.png"
+    },
+    "default_title": "Extract IG Collection"
+  }
+}  

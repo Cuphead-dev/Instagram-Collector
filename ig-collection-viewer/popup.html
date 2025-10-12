@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Instagram Extractor</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      width: 270px;
+      padding: 15px;
+      background: #fafafa;
+    }
+    h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 8px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      color: white;
+      transition: 0.25s;
+    }
+    #extract {
+      background: #007bff;
+    }
+    #extract:hover {
+      background: #0056b3;
+    }
+    #clear {
+      background: #ff5555;
+    }
+    #clear:hover {
+      background: #cc4444;
+    }
+    #status {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #222;
+      word-wrap: break-word;
+      line-height: 1.4em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Instagram Collector</h1>
+
+  <button id="extract">📥 ดึงข้อมูล</button>
+  <button id="clear">🧹 ล้างข้อมูล</button>
+  
+  <div id="status" style="margin-top: 10px; color: #00ff88;"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
