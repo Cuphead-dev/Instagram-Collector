@@ -24,8 +24,8 @@ async function extractData() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
     // โหลดข้อมูลเก่าจาก storage
-    const oldData = await chrome.storage.local.get(['igCollection']);
-    const existingLinks = new Set((oldData.igCollection || []).map(item => item.link));
+    const oldData = await chrome.storage.local.get(['igCollection2']);
+    const existingLinks = new Set((oldData.igCollection2 || []).map(item => item.link));
     
     status.textContent = `⏳ กำลัง scroll... (มีข้อมูลเก่า ${existingLinks.size} รายการ)`;
 
@@ -44,10 +44,10 @@ async function extractData() {
     }
 
     // รวมข้อมูลเก่า + ใหม่
-    const allMedia = [...newMedia, ...(oldData.igCollection || [])];
+    const allMedia = [...newMedia, ...(oldData.igCollection2 || [])];
     
     // บันทึกข้อมูลรวม
-    await chrome.storage.local.set({ igCollection: allMedia });
+    await chrome.storage.local.set({ igCollection2: allMedia });
 
     // สร้างไฟล์ HTML ใหม่ (เขียนทับ)
     const htmlContent = generateHTML(allMedia);
@@ -56,7 +56,7 @@ async function extractData() {
     
     await chrome.downloads.download({
       url: htmlUrl,
-      filename: `Collection_video/ig_collection_master.html`,
+      filename: `Collection_video2/ig_collection_master.html`,
       saveAs: false,
       conflictAction: 'overwrite'
     });
@@ -67,7 +67,7 @@ async function extractData() {
     
     await chrome.downloads.download({
       url: jsonUrl,
-      filename: `Collection_video/ig_collection_backup.json`,
+      filename: `Collection_video2/ig_collection_backup.json`,
       saveAs: false,
       conflictAction: 'overwrite'
     });
@@ -93,9 +93,9 @@ async function clearData() {
   }
 
   try {
-    await chrome.storage.local.remove(['igCollection']);
-    status.textContent = '✅ ล้างข้อมูลเรียบร้อย!';
-    setTimeout(() => { status.textContent = ''; }, 3000);
+    await chrome.storage.local.remove(['igCollection2']);
+    status.textContent = '✅ ล้างข้อมูลเรียบร้อย!\n\n💡 หมายเหตุ: Folder ที่สร้างไว้ยังคงอยู่ใน localStorage ของ HTML';
+    setTimeout(() => { status.textContent = ''; }, 5000);
   } catch (err) {
     status.textContent = '⚠️ เกิดข้อผิดพลาด: ' + err.message;
     console.error(err);
@@ -103,14 +103,13 @@ async function clearData() {
 }
 
 // ================================
-// สร้าง HTML Template
+// สร้าง HTML Template (ใช้ card-number)
 // ================================
 function generateHTML(data) {
   const date = new Date().toLocaleString('th-TH');
   const totalCount = data.length;
   const escapeHtml = (str) => {
     return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
-    
   };
   
   return `<!DOCTYPE html>
@@ -639,37 +638,42 @@ function generateHTML(data) {
 
         .video-container {
             position: relative;
-            width: 90%;
-            max-width: 500px;
-            aspect-ratio: 9/16;
+            width: 95%;
+            max-width: 1000px;
+            height: 90vh;
             background: #000;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 10px 50px rgba(0,212,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .video-frame {
             width: 100%;
             height: 100%;
             border: none;
+            background: #000;
         }
 
         .video-close {
             position: absolute;
-            top: -50px;
-            right: 0;
-            background: #dc3545;
+            top: 10px;
+            right: 10px;
+            background: rgba(220, 53, 69, 0.9);
             color: white;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s;
+            z-index: 10;
         }
 
         .video-close:hover {
@@ -679,15 +683,17 @@ function generateHTML(data) {
 
         @media (max-width: 768px) {
             .video-container {
-                width: 95%;
+                width: 98%;
                 max-width: none;
+                height: 85vh;
             }
             
             .video-close {
-                top: -45px;
-                width: 35px;
-                height: 35px;
-                font-size: 20px;
+                top: 8px;
+                right: 8px;
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
             }
         }
 
@@ -714,7 +720,7 @@ function generateHTML(data) {
 </head>
 <body>
     <div class="container">
-        <h1>📸 Instagram Collection</h1>
+        <h1>📸 Instagram Collection 2</h1>
         <div class="subtitle">อัพเดทล่าสุด: ${date}</div>
         
         <div class="folder-section">
@@ -818,20 +824,20 @@ function generateHTML(data) {
         let folders = JSON.parse(localStorage.getItem('ig_folders') || '{}');
         let currentFolder = 'all';
         let selectedFolders = new Set();
-        let currentLink = null;
         let selectedCards = new Set();
 
+        // ⭐ เปลี่ยนจากเก็บ URL เป็นเก็บ card-number
         function toggleCardSelection(checkbox) {
             const card = checkbox.closest('.card');
             if (!card) return;
             
-            const link = card.dataset.link;
+            const cardNumber = parseInt(card.dataset.number); // ⭐ ใช้ card-number
             
             if (checkbox.checked) {
-                selectedCards.add(link);
+                selectedCards.add(cardNumber);
                 card.classList.add('selected');
             } else {
-                selectedCards.delete(link);
+                selectedCards.delete(cardNumber);
                 card.classList.remove('selected');
             }
             
@@ -878,7 +884,6 @@ function generateHTML(data) {
                 return;
             }
 
-            currentLink = null;
             selectedFolders.clear();
 
             const modalList = document.getElementById('modalFolderList');
@@ -894,8 +899,9 @@ function generateHTML(data) {
                 let allInFolder = true;
                 let someInFolder = false;
                 
-                selectedCards.forEach(function(link) {
-                    if (folderData && folderData.includes(link)) {
+                // ⭐ เช็คด้วย card-number
+                selectedCards.forEach(function(cardNumber) {
+                    if (folderData && folderData.includes(cardNumber)) {
                         someInFolder = true;
                     } else {
                         allInFolder = false;
@@ -976,6 +982,7 @@ function generateHTML(data) {
             alert('✅ ลบโฟลเดอร์ "' + name + '" สำเร็จ');
         }
 
+        // ⭐ ใช้ card-number ในการกรอง
         function filterFolder(name, event) {
             currentFolder = name;
             const cards = document.querySelectorAll('.card');
@@ -991,8 +998,8 @@ function generateHTML(data) {
             }
             
             cards.forEach(function(card) {
-                const link = card.dataset.link;
-                const match = (name === 'all' || (folders[name] && folders[name].includes(link)));
+                const cardNumber = parseInt(card.dataset.number); // ⭐ ใช้ card-number
+                const match = (name === 'all' || (folders[name] && folders[name].includes(cardNumber)));
                 if (match) {
                     card.classList.remove('hidden');
                     visibleCount++;
@@ -1009,7 +1016,7 @@ function generateHTML(data) {
             if (!card) return;
             
             selectedCards.clear();
-            selectedCards.add(card.dataset.link);
+            selectedCards.add(parseInt(card.dataset.number)); // ⭐ ใช้ card-number
             
             document.querySelectorAll('.card').forEach(function(c) {
                 c.classList.remove('selected');
@@ -1048,8 +1055,8 @@ function generateHTML(data) {
                 if (checkbox) checkbox.checked = false;
                 if (status) {
                     let allInFolder = true;
-                    selectedCards.forEach(function(link) {
-                        if (!folders[name] || !folders[name].includes(link)) {
+                    selectedCards.forEach(function(cardNumber) {
+                        if (!folders[name] || !folders[name].includes(cardNumber)) {
                             allInFolder = false;
                         }
                     });
@@ -1063,6 +1070,7 @@ function generateHTML(data) {
             }
         }
 
+        // ⭐ ใช้ card-number ในการบันทึก
         function confirmFolders() {
             if (selectedFolders.size === 0) {
                 alert('⚠️ กรุณาเลือกโฟลเดอร์อย่างน้อย 1 โฟลเดอร์');
@@ -1082,13 +1090,13 @@ function generateHTML(data) {
                     folders[name] = [];
                 }
                 
-                selectedCards.forEach(function(link) {
-                    const index = folders[name].indexOf(link);
+                selectedCards.forEach(function(cardNumber) { // ⭐ ใช้ card-number
+                    const index = folders[name].indexOf(cardNumber);
                     if (index > -1) {
                         folders[name].splice(index, 1);
                         totalRemoved++;
                     } else {
-                        folders[name].push(link);
+                        folders[name].push(cardNumber); // ⭐ เก็บเป็นตัวเลข
                         totalAdded++;
                     }
                 });
@@ -1158,6 +1166,7 @@ function generateHTML(data) {
         loadFolders();
         updateStats(totalCount);
         console.log('✅ โหลดข้อมูล ' + totalCount + ' รายการสำเร็จ');
+        console.log('📁 Folder ใช้ระบบเลขลำดับ (card-number)');
 
         // Video Modal Functions
         function openInModal(link) {
@@ -1167,24 +1176,24 @@ function generateHTML(data) {
             
             var embedUrl = link;
             
-            // แปลง URL เป็น embed format
+            // แปลง URL เป็น embed format (แบบไม่มี description)
             if (link.indexOf('/reel/') > -1) {
                 var parts = link.split('/reel/')[1];
                 if (parts) {
                     var code = parts.split('/')[0].split('?')[0];
-                    embedUrl = 'https://www.instagram.com/reel/' + code + '/embed';
+                    embedUrl = 'https://www.instagram.com/reel/' + code + '/embed/captioned/?utm_source=ig_embed';
                 }
             } else if (link.indexOf('/p/') > -1) {
                 var parts = link.split('/p/')[1];
                 if (parts) {
                     var code = parts.split('/')[0].split('?')[0];
-                    embedUrl = 'https://www.instagram.com/p/' + code + '/embed';
+                    embedUrl = 'https://www.instagram.com/p/' + code + '/embed/captioned/?utm_source=ig_embed';
                 }
             } else if (link.indexOf('/tv/') > -1) {
                 var parts = link.split('/tv/')[1];
                 if (parts) {
                     var code = parts.split('/')[0].split('?')[0];
-                    embedUrl = 'https://www.instagram.com/tv/' + code + '/embed';
+                    embedUrl = 'https://www.instagram.com/tv/' + code + '/embed/captioned/?utm_source=ig_embed';
                 }
             }
             
